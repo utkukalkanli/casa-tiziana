@@ -37,6 +37,22 @@ export default function App() {
               />
             </svg>
             {content.location}
+            <span className="eyebrow-cta">
+              <span>{content.locationCta}</span>
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M7 17 17 7M9 7h8v8" />
+              </svg>
+            </span>
           </a>
           <h1 className="headline">
             <span className="thin">{headline.lead} </span>

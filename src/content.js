@@ -6,6 +6,10 @@
 export const content = {
   name: 'Casa Tiziana',
   location: 'Val di Sole, Trentino–South Tyrol, Italy',
+  // The location line is also the link to the Maps pin (`contact.maps`). Nothing on
+  // the flyer says so, so the site has to: this label is what makes the link legible
+  // as a link on a phone, where there is no hover to discover it with.
+  locationCta: 'View on map',
 
   // Split the way the flyer sets it: light "Your" / heavy "Basecamp" / light "in the" /
   // heavy "Dolomites". The typography carries the emphasis, so keep the parts separate.

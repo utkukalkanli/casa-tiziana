@@ -57,10 +57,18 @@ body {
     linear-gradient(to top, rgba(44, 48, 56, 0.75), rgba(44, 48, 56, 0) 40%);
 }
 
+/* The location line doubles as the link to the property's Maps pin, so it has to
+   look tappable while standing still. A hover underline cannot do that — on a phone
+   there is no hover, and the link read as plain text. It borrows the flyer's teal
+   pill instead, which is what a call to action looks like in this brand. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--teal);
+  background: rgba(127, 173, 173, 0.18);
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -69,18 +77,53 @@ body {
   pointer-events: auto;
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.eyebrow:hover {
-  color: var(--teal);
-  border-bottom-color: var(--teal);
+.eyebrow:hover,
+.eyebrow:focus-visible {
+  background: var(--teal-deep);
+  border-color: var(--paper);
+}
+
+.eyebrow:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 3px;
 }
 
 .eyebrow svg {
   flex: none;
   color: var(--teal);
+}
+
+.eyebrow:hover svg,
+.eyebrow:focus-visible svg {
+  color: var(--paper);
+}
+
+/* "View on map ↗" — the part that names the destination. Divided off the location
+   itself so the line still reads as one label, not two. */
+.eyebrow-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid rgba(244, 242, 238, 0.3);
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+.eyebrow:hover .eyebrow-cta,
+.eyebrow:focus-visible .eyebrow-cta {
+  color: var(--paper);
+}
+
+/* Narrow phones: the location string alone nearly fills the line, so drop the
+   words and keep the arrow — the pill shape is carrying the affordance by then. */
+@media (max-width: 26rem) {
+  .eyebrow-cta span {
+    display: none;
+  }
 }
 
 .headline {

@@ -1,0 +1,239 @@
+:root {
+  /* Palette sampled from Flyer-CasaTiziana.pdf. */
+  --teal: #7fadad;
+  --teal-deep: #5c8f8f;
+  --charcoal: #2c3038;
+  --charcoal-soft: #3a3f49;
+  --paper: #f4f2ee;
+  --whatsapp: #25d366;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--paper);
+  background: var(--charcoal);
+  overflow: hidden;
+}
+
+.canvas-host {
+  position: fixed;
+  inset: 0;
+}
+
+/* Passive layer over the canvas — it must not eat orbit drags. Interactive
+   children opt back in with `pointer-events: auto`. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.25rem, 4vw, 3rem);
+  pointer-events: none;
+  /* Scrim: the sky behind the canvas is light, so white copy needs its own
+     contrast rather than relying on whatever the camera happens to be framing. */
+  background:
+    linear-gradient(
+      to right,
+      rgba(44, 48, 56, 0.8) 0%,
+      rgba(44, 48, 56, 0.45) 45%,
+      rgba(44, 48, 56, 0) 75%
+    ),
+    linear-gradient(to top, rgba(44, 48, 56, 0.75), rgba(44, 48, 56, 0) 40%);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+.headline {
+  margin: 0.75rem 0 0;
+  font-size: clamp(2.5rem, 9vw, 6rem);
+  line-height: 0.95;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+}
+
+.headline .thin {
+  font-weight: 400;
+  font-size: 0.55em;
+  letter-spacing: 0;
+}
+
+.intro {
+  margin: 1.25rem 0 0;
+  max-width: 42ch;
+  line-height: 1.6;
+  opacity: 0.9;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+.pill {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  background: var(--teal);
+  color: var(--charcoal);
+  font-weight: 700;
+  font-size: clamp(1rem, 2.6vw, 1.4rem);
+}
+
+.pill .note {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.activities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 34rem;
+}
+
+.activities li {
+  padding: 0.32rem 0.8rem;
+  border: 1px solid rgba(244, 242, 238, 0.35);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9375rem;
+  max-width: 34rem;
+}
+
+.features li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+.features li::before {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
+
+.contact a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 999px;
+  background: var(--whatsapp);
+  color: #04310f;
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+.btn-whatsapp:hover {
+  transform: translateY(-2px);
+}
+
+.btn-deals {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1.2rem;
+  border-radius: 999px;
+  background: var(--teal);
+  color: var(--charcoal);
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+.btn-deals:hover {
+  transform: translateY(-2px);
+}
+
+.contact .email {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.contact .email:hover {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .features {
+    grid-template-columns: 1fr;
+    font-size: 0.875rem;
+  }
+
+  .footer {
+    align-items: flex-start;
+  }
+
+  .contact {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

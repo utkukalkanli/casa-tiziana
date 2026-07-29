@@ -33,6 +33,11 @@ jobs:
           # Project sites live at /<repo>/. Reading the name from the event keeps
           # this correct if the repository is ever renamed.
           BASE_PATH: /${{ github.event.repository.name }}/
+          # The same address in absolute form, for the canonical link, the Open Graph
+          # tags, the structured data and the sitemap — none of which can be
+          # expressed as a path. Derived from the event for the same reason.
+          # On a custom domain, set this to that domain instead.
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
 
       - uses: actions/upload-pages-artifact@v3
         with:

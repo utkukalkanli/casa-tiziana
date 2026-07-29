@@ -3,8 +3,168 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Casa Tiziana</title>
-    <meta name="description" content="Casa Tiziana — rooms, terrace and surroundings." />
+
+    <!--
+      %SITE_URL% is substituted at build time by the plugin in vite.config.js, which
+      also emits robots.txt and sitemap.xml from the same value. The deploy workflow
+      derives it from the push event, so it survives a repository rename. It always
+      ends in a slash.
+    -->
+    <title>Casa Tiziana — Holiday Apartment in Val di Sole, Dolomites</title>
+    <meta
+      name="description"
+      content="Self-catering apartment for up to 6 in Dimaro Folgarida, Val di Sole. Ski, bike, hike and raft in the Dolomites from €110 a night. Book direct on WhatsApp."
+    />
+    <link rel="canonical" href="%SITE_URL%" />
+
+    <!-- max-snippet/max-image-preview are opt-ins: without them Google may show a
+         clipped snippet and a thumbnail too small to read. -->
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#2c3038" />
+
+    <!-- Open Graph. The booking channel is WhatsApp, so the link is shared into chat
+         far more often than it is found in a search — the preview card is doing real
+         work here, not decoration. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Casa Tiziana" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:title" content="Casa Tiziana — Your Basecamp in the Dolomites" />
+    <meta
+      property="og:description"
+      content="A self-catering apartment for up to 6 in Val di Sole, Trentino. Climbing, mountain biking, hiking, rafting and skiing from the door. From €110 a night."
+    />
+    <meta property="og:url" content="%SITE_URL%" />
+    <meta property="og:image" content="%SITE_URL%social-card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Casa Tiziana, an apartment below the mountains of Val di Sole, with skiers, hikers and cyclists in the valley."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Casa Tiziana — Your Basecamp in the Dolomites" />
+    <meta
+      name="twitter:description"
+      content="A self-catering apartment for up to 6 in Val di Sole, Trentino. Climbing, mountain biking, hiking, rafting and skiing from the door."
+    />
+    <meta name="twitter:image" content="%SITE_URL%social-card.jpg" />
+
+    <!-- Legacy geo tags. Google ignores them; a number of travel directories and
+         scrapers still read them, and they cost four lines. -->
+    <meta name="geo.region" content="IT-TN" />
+    <meta name="geo.placename" content="Dimaro Folgarida, Val di Sole" />
+    <meta name="geo.position" content="46.324029;10.8827959" />
+    <meta name="ICBM" content="46.324029, 10.8827959" />
+
+    <!--
+      Structured data. VacationRental is a subtype of LodgingBusiness — the right
+      entity for one whole-property let, as opposed to Hotel, which implies room
+      inventory this property does not have.
+
+      `containedInPlace` is what ties the listing to the searches people actually
+      run: nobody types the postcode, they type "Val di Sole" or "Dimaro".
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "VacationRental",
+            "@id": "%SITE_URL%#property",
+            "name": "Casa Tiziana",
+            "url": "%SITE_URL%",
+            "description": "A self-catering holiday apartment in Carciato, Dimaro Folgarida, in the Val di Sole, Trentino. Let whole to one group of up to six, with a fully equipped kitchen, private parking and bike and ski storage. A basecamp for climbing, mountain biking, hiking, rafting and skiing in the Dolomites.",
+            "image": "%SITE_URL%social-card.jpg",
+            "telephone": "+39 342 0746693",
+            "email": "gabriele.girardi@proton.me",
+            "priceRange": "From €110 per night",
+            "currenciesAccepted": "EUR",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Carciato, Dimaro Folgarida",
+              "addressRegion": "TN",
+              "postalCode": "38027",
+              "addressCountry": "IT"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 46.324029,
+              "longitude": 10.8827959
+            },
+            "hasMap": "https://maps.app.goo.gl/wory6CLtPR8x2Ac19",
+            "containedInPlace": {
+              "@type": "Place",
+              "name": "Val di Sole, Trentino, Italy"
+            },
+            "petsAllowed": "https://schema.org/Unknown",
+            "numberOfRooms": 1,
+            "occupancy": {
+              "@type": "QuantitativeValue",
+              "maxValue": 6,
+              "unitText": "guests"
+            },
+            "amenityFeature": [
+              {
+                "@type": "LocationFeatureSpecification",
+                "name": "Fully equipped kitchen",
+                "value": true
+              },
+              {
+                "@type": "LocationFeatureSpecification",
+                "name": "Private parking",
+                "value": true
+              },
+              {
+                "@type": "LocationFeatureSpecification",
+                "name": "Bike storage",
+                "value": true
+              },
+              {
+                "@type": "LocationFeatureSpecification",
+                "name": "Ski storage",
+                "value": true
+              },
+              {
+                "@type": "LocationFeatureSpecification",
+                "name": "Quiet location near the forest",
+                "value": true
+              }
+            ],
+            "makesOffer": {
+              "@type": "Offer",
+              "name": "Whole apartment, per night",
+              "priceSpecification": {
+                "@type": "PriceSpecification",
+                "minPrice": 110,
+                "priceCurrency": "EUR",
+                "unitText": "night"
+              },
+              "availability": "https://schema.org/InStock",
+              "url": "https://wa.me/393420746693"
+            },
+            "potentialAction": {
+              "@type": "ReserveAction",
+              "name": "Book on WhatsApp",
+              "target": "https://wa.me/393420746693"
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "%SITE_URL%#website",
+            "url": "%SITE_URL%",
+            "name": "Casa Tiziana",
+            "inLanguage": "en",
+            "about": { "@id": "%SITE_URL%#property" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

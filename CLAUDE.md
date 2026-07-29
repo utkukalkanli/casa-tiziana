@@ -28,6 +28,13 @@ npm run preview    # serve dist/ locally
 
 There is no test runner and no linter configured.
 
+Generated artifacts, re-run by hand and committed — neither is part of `npm run build`:
+
+```bash
+node scripts/make-social-card.mjs   # public/social-card.jpg, the Open Graph image
+node scripts/add-qr.mjs             # the flyer PDFs with a QR to the site
+```
+
 To reproduce what GitHub Pages will actually serve — the one thing `npm run dev` cannot show you:
 
 ```bash
@@ -60,13 +67,34 @@ useGLTF(asset('models/room.glb'))    // correct
 **Every runtime asset path — GLTF, textures, HDRIs, video, audio — goes through `asset()` in
 `src/lib/asset.js`.** Anything under `public/` is a runtime asset path.
 
+### Its companion: `SITE_URL`
+
+A base path is enough for the browser and useless to a crawler. The canonical link, the Open
+Graph tags, the JSON-LD and the sitemap all need the **absolute** origin — `/casa-tiziana/` does
+not tell Google which host it belongs to.
+
+So `vite.config.js` also reads `process.env.SITE_URL` (the workflow derives it from the push
+event, same as `BASE_PATH`; the local fallback is the current Pages address). A small plugin in
+that file does two things with it:
+
+- substitutes `%SITE_URL%` wherever it appears in `index.html`, and
+- **generates `robots.txt` and `sitemap.xml`** into `dist/`.
+
+Those two files are generated rather than parked in `public/` precisely because they contain the
+absolute URL. A static `sitemap.xml` keeps pointing at the old host after a rename or a move to a
+custom domain, and a stale sitemap is worse than none — Google goes on requesting URLs that no
+longer exist. **Do not add either file to `public/`.**
+
+On a custom domain, set `SITE_URL` to that domain in the workflow. `scripts/add-qr.mjs` has its
+own copy of the URL and a printed QR cannot be redirected, so change it there too and reprint.
+
 ## Layout
 
 | Path | Role |
 |---|---|
-| `index.html` | Vite entry. Document `<head>`, meta tags, SEO. |
-| `src/App.jsx` | `<Canvas>` setup (camera, dpr, shadows, exposure) plus the DOM overlay. |
-| `src/content.js` | Every string and hard fact, transcribed from the flyer. Single source of truth. |
+| `index.html` | Vite entry. Title, meta, Open Graph, geo tags and the JSON-LD block. |
+| `src/App.jsx` | `<Canvas>` setup (camera, dpr, shadows, exposure), the hero, and the prose page. |
+| `src/content.js` | Every string and hard fact. `content` = the flyer; `sections` = the prose page. |
 | `src/scene/Scene.jsx` | Composition only: fog, lights, controls, and the five scene modules. |
 | `src/scene/Chalet.jsx` | The building. Dimensions at the top drive the roof maths. |
 | `src/scene/HomeMountain.jsx` | The near mountain: rock, snow cap, piste, walking path. |
@@ -78,11 +106,31 @@ useGLTF(asset('models/room.glb'))    // correct
 | `src/scene/palette.js` | Material colours and jacket colours. |
 | `src/lib/asset.js` | Base-path-aware asset URLs. See above. |
 | `src/lib/useReducedMotion.js` | Reactive `prefers-reduced-motion` hook. |
-| `src/index.css` | Design tokens in `:root`, plus overlay and canvas layout. |
+| `src/lib/useInView.js` | Viewport-intersection hook. Gates the render loop. |
+| `src/index.css` | Design tokens in `:root`, plus hero, canvas and prose-page layout. |
+| `scripts/make-social-card.mjs` | Draws `public/social-card.jpg`, the 1200×630 Open Graph image. |
 | `public/models/` | GLTF/GLB drop point. |
+| `public/favicon.svg` | Tab and search-result mark. |
+| `public/social-card.jpg` | Generated artifact — edit the script, not the file. |
 
-The DOM overlay sits above the canvas and is `pointer-events: none` so it does not swallow orbit
-drags — interactive children have to opt back in with `pointer-events: auto`.
+### The page is two layers and it scrolls
+
+`.canvas-host` is `position: fixed` behind everything. `.hero` is a normal-flow section of
+`min-height: 100svh` sitting over it, and `.page` — the prose — scrolls up over the canvas on an
+opaque background. Three consequences, each of which has already been a bug:
+
+- **`.hero` is `pointer-events: none`** so it does not swallow orbit drags; interactive children
+  opt back in with `pointer-events: auto`.
+- **Nothing may reintroduce `overflow: hidden` on `body`.** It strands every word below the hero
+  — which is the copy the site is meant to rank on.
+- **The controls may not own the wheel or the vertical swipe.** `OrbitControls` sets
+  `enableZoom={false}` so the wheel scrolls the page, and `index.css` forces
+  `touch-action: pan-y` on the canvas because the controls set `touch-action: none` on connect —
+  without it a finger dragged over the hero rotates the camera and the phone never scrolls.
+
+Because the canvas is fixed, it would otherwise go on rendering behind an opaque wall of text, so
+`App.jsx` gates `frameloop` on `useInView(heroRef)`. Verified: ~16k draw calls per second at the
+hero, zero once it is scrolled past, and it resumes on the way back.
 
 ## The scene
 
@@ -129,14 +177,24 @@ Other non-obvious choices, all load-bearing:
   third-party dependency to a site that is otherwise fully self-contained, and they fail closed.
   Use explicit lights, or download the asset into `public/` and reference it through `asset()`.
 - **Copy lives in `src/content.js`, never inline in a component.** Components destructure from it.
-  The flyer is the upstream source; when it changes, that file changes first.
+  It has two exports: `content` is the flyer, transcribed — when the flyer changes, that changes
+  first. `sections` is the prose page, which the flyer has no equivalent of.
+- **The address is stated in two places and they must agree.** The JSON-LD in `index.html` and the
+  colophon rendered from `content.place` describe the same property to the same crawler; a
+  mismatch between the page and its structured data is the usual reason a local listing fails to
+  associate with its site.
+- **Do not invent amenities.** Everything in `content.features` is off the flyer. `sections` may
+  describe the *valley* from checkable public facts, but an amenity that is not on the flyer — wifi,
+  linen, a hot tub, check-in times — is a complaint at the door, not a keyword.
 - **Design tokens** are CSS custom properties in `:root` (`src/index.css`), sampled from the
   flyer's teal/charcoal palette. Scene material colours are a separate `COLORS` object in
   `Scene.jsx` — they describe physical materials (stucco, timber, rock), not brand, so the two
   sets are deliberately not shared.
-- **The overlay carries its own scrim.** The sky behind the canvas is light and the camera
+- **The hero carries its own scrim.** The sky behind the canvas is light and the camera
   auto-orbits, so white copy cannot rely on whatever happens to be behind it. The gradient on
-  `.overlay` is what guarantees contrast — don't remove it without replacing the mechanism.
+  `.hero` is what guarantees contrast — don't remove it without replacing the mechanism. Its
+  vertical leg also closes on solid `--charcoal` at the bottom edge, which is what makes the
+  handover into `.page` seamless rather than a visible seam.
 - **Reduced motion**: auto-rotate is gated on `useReducedMotion()`. Any new idle animation —
   camera drift, floating elements, scroll parallax — needs the same gate.
 - **Asset budget matters more than usual here.** GitHub Pages caps a file at 100MB and a site at

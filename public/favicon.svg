@@ -1,0 +1,16 @@
+<!--
+  Tab and search-result mark. Google shows a favicon beside mobile results, and a
+  missing one is a visible 404, so this is small SEO polish as much as branding.
+
+  Drawn for 16px first: two flat peaks and a snow cap, no thin strokes and no detail
+  that survives only at 64px. Colours are the flyer's charcoal and teal.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Casa Tiziana">
+  <rect width="64" height="64" rx="14" fill="#2c3038" />
+  <!-- Back peak, held down and to the right so the front peak reads first. -->
+  <path d="M36 50 52 24l12 26z" fill="#5c8f8f" />
+  <!-- Front peak. -->
+  <path d="M0 50 22 15l22 35z" fill="#7fadad" />
+  <!-- Snow cap: the summit triangle of the front peak, cut at a fixed height. -->
+  <path d="M22 15l7.6 12.1a13 13 0 0 1-15.2 0z" fill="#f4f2ee" />
+</svg>

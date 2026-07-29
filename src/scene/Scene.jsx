@@ -42,6 +42,11 @@ export default function Scene() {
         autoRotate={!reducedMotion}
         autoRotateSpeed={0.3}
         enablePan={false}
+        // The page scrolls now, and the canvas is fixed across the whole viewport. If
+        // the controls kept the wheel, a reader scrolling towards the copy below would
+        // dolly the camera instead and never reach it. Rotation is the interaction
+        // worth having here; zoom was never load-bearing.
+        enableZoom={false}
         minDistance={14}
         maxDistance={44}
         // Lower bound keeps the camera above the horizon so it never dips under the

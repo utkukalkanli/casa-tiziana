@@ -54,5 +54,9 @@ export const content = {
     whatsapp: '+39 342 0746693',
     whatsappUrl: 'https://wa.me/393420746693',
     email: 'gabriele.girardi@proton.me',
+    // Google Maps short link for the property. Shortlinks resolve server-side, so
+    // this one cannot be verified from the code — if the pin ever moves, replace it
+    // here rather than patching a component.
+    maps: 'https://maps.app.goo.gl/wory6CLtPR8x2Ac19',
   },
 }

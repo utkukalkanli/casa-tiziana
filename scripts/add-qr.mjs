@@ -2,7 +2,11 @@
  * Stamps a QR code for the live site onto the printed flyer.
  *
  *   node scripts/add-qr.mjs            # inline: tucks a QR card into the existing layout
+ *   node scripts/add-qr.mjs --corner   # corner: one large card in the sky beside "Italy"
  *   node scripts/add-qr.mjs --band     # band:   scales the flyer down, adds a footer strip
+ *
+ * Each layout is an alternative, not a layer — every run starts from the clean
+ * source, so --corner produces a flyer carrying only the corner code.
  *
  * The source PDF is never modified — each run writes a new file. Re-run after any
  * change to SITE_URL; a printed QR cannot be redirected, so the URL must be final
@@ -27,11 +31,35 @@ const WHITE = rgb(1, 1, 1)
  *   below the deals pill    only ~39pt tall
  *   right of the price pill clear, but boxed in by the mountain photo at ~53pt
  *
- * The last is the only non-colliding spot, and it forces a 42pt (1.5cm) code —
- * about 0.5mm per module, which scans but has no margin for a bad print. Prefer
- * --band, which affords 2cm.
+ * The last is the only workable spot. A strictly non-colliding card there is ~41pt,
+ * which is under the 1.5cm floor for a reliable print, so the card is deliberately
+ * oversized: it keeps a margin from the price pill on its left and the body copy
+ * above — the two elements a collision would actually read as a mistake — and laps
+ * onto the photo circles on its right and below, where an opaque white card with a
+ * teal keyline reads as a sticker rather than a clash.
+ *
+ * The four edges are each pinned to something, so nudge with care:
+ *   x     >= 306   clears the "110 €/night" pill
+ *   y+size <= 476  clears the last line of body copy
+ *   x+size, y      lap onto the Dolomites and climber circles by design
  */
-const INLINE = { x: 310, y: 418, size: 52, quiet: 5 }
+const INLINE = { x: 306, y: 407, size: 66, quiet: 6 }
+
+/**
+ * Twice the inline card (132pt / 4.7cm), in the patch of sky and forest right of
+ * "...Trentino-South Tyrol, Italy". Nothing but photograph is under it, which is why
+ * this is the only spot on the flyer that takes a code this size.
+ *
+ * Measured off the same render. Only the left edge has a hard limit — the type on
+ * this half of the flyer is all left-aligned and ends well before the card:
+ *   x >= 400        clears "Italy" (ends at 389) and "BASECAMP" (ends at 390)
+ *   x + size <= 570 keeps the right page margin near the ~30pt the flyer uses
+ *   y + size <= 823 leaves page above the card, so a trim cannot bite it
+ *
+ * "DOLOMITES" tops out at 661 but ends at x 405, so it constrains nothing here;
+ * the card can drop past that line without touching it.
+ */
+const CORNER = { x: 432, y: 650, size: 132, quiet: 12, border: 2.5 }
 
 const BAND = { height: 74 }
 
@@ -47,11 +75,11 @@ async function qrPng(doc) {
   return doc.embedPng(buf)
 }
 
-async function inlineLayout(doc, page, qr) {
-  const { x, y, size, quiet } = INLINE
-
-  // White card: on a dark background a QR has no contrast and no quiet zone, so
-  // this is functional, not decorative.
+/**
+ * Draws one QR card. The white fill is functional, not decorative: over a dark
+ * panel or a photograph a bare code has neither contrast nor a quiet zone.
+ */
+function drawCard(page, { x, y, size, quiet, border = 1.5 }, qr) {
   page.drawRectangle({
     x,
     y,
@@ -59,7 +87,7 @@ async function inlineLayout(doc, page, qr) {
     height: size,
     color: WHITE,
     borderColor: TEAL,
-    borderWidth: 1.5,
+    borderWidth: border,
   })
 
   page.drawImage(qr, {
@@ -123,21 +151,23 @@ async function bandLayout(doc, srcDoc, qr) {
 
 async function main() {
   const band = process.argv.includes('--band')
+  const corner = process.argv.includes('--corner')
   const srcBytes = await readFile(SOURCE)
 
-  const out = band ? 'Flyer-CasaTiziana-QR-band.pdf' : 'Flyer-CasaTiziana-QR.pdf'
-
   let doc
+  let out
   if (band) {
+    out = 'Flyer-CasaTiziana-QR-band.pdf'
     doc = await PDFDocument.create()
     const srcDoc = await PDFDocument.load(srcBytes)
     const qr = await qrPng(doc)
     await bandLayout(doc, srcDoc, qr)
   } else {
+    out = corner ? 'Flyer-CasaTiziana-QR-corner.pdf' : 'Flyer-CasaTiziana-QR.pdf'
     doc = await PDFDocument.load(srcBytes)
     const qr = await qrPng(doc)
     const [page] = doc.getPages()
-    await inlineLayout(doc, page, qr)
+    drawCard(page, corner ? CORNER : INLINE, qr)
   }
 
   await writeFile(out, await doc.save())

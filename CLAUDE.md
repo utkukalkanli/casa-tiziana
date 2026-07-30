@@ -15,7 +15,10 @@ the site mirrors that. Resist adding hotel furniture like room-type grids or per
 unless the owner asks.
 
 `Flyer-CasaTiziana.pdf` in the repo root is the source material. Everything factual on the site is
-transcribed into `src/content.js`; the flyer itself is not shipped to the browser.
+transcribed into `src/content/`; the flyer itself is not shipped to the browser.
+
+The site is published in **English, Italian and German**, switched client-side. See
+[Three languages](#three-languages).
 
 ## Commands
 
@@ -88,13 +91,86 @@ longer exist. **Do not add either file to `public/`.**
 On a custom domain, set `SITE_URL` to that domain in the workflow. `scripts/add-qr.mjs` has its
 own copy of the URL and a printed QR cannot be redirected, so change it there too and reprint.
 
+## Three languages
+
+English, Italian, German. Italian is the closest market — people drive up for a weekend — and
+German is the valley's other one; Folgarida's winter traffic comes from Germany and Austria.
+
+There is one HTML file and no server to negotiate with, so the language is resolved in the
+browser by `src/lib/useLanguage.js`, in this order: **`?lang=` in the URL → `localStorage` →
+`navigator.languages` → English.** A choice writes back to both the URL (via `replaceState`, so
+the back button does not walk through every language tried) and storage.
+
+The copy layer:
+
+- **`facts.js` holds what does not translate** — the name, the rate, the phone number, the Maps
+  pin, the postal address. Written once and merged into every language by `copyFor()`. A price or
+  a phone number repeated in three files drifts in three directions.
+- **`en.js` is the reference shape. `it.js` and `de.js` mirror it key for key.** A key missing
+  from one of them renders `undefined` on the page; there is no fallback and no lint to catch it.
+  When you add a string, add it three times.
+- **Section ids are not copy.** They live in the `IDS` table in `content/index.js`, because they
+  are URL fragments — someone has already been sent `#apartment`, and switching language must not
+  move an anchor.
+- Currency position is a per-language flag (`currencyAfter`), not three copies of the number:
+  `€110` in English, `110 €` in Italian and German.
+
+What the switcher changes beyond the words: `<html lang>`, `<title>`, the description, the Open
+Graph/Twitter pair, `og:locale`, and the canonical link. The whole page is client-rendered — a
+crawler already has to run the bundle to read a single sentence — so the head it sees is the one
+`useLanguage` sets, and `index.html` carries the matching `hreflang` alternates for `?lang=it` and
+`?lang=de`. `vite.config.js` lists all three URLs in the sitemap with `xhtml:link` alternates.
+
+**If a fourth language is ever added**, it needs: a file mirroring `en.js`, an entry in
+`LANGUAGES`, an `alts` block for every photo id, a `hreflang` line in `index.html`, and an entry
+in the sitemap's `languages` array. The switcher itself renders from `LANGUAGES` and needs nothing.
+
+## The photographs
+
+`public/photos/` holds Gabriele's own pictures of the property, lifted from its earlier Google
+Sites page at **appartamentitiziana.it** (same phone number, same property). Two widths per
+picture, `<id>-760.webp` and `<id>-1520.webp`, all from 8:7 originals with EXIF stripped:
+
+```bash
+magick original.jpg -strip -resize '760x>'  -quality 78 -define webp:method=6 public/photos/<id>-760.webp
+magick original.jpg -strip -resize '1520x>' -quality 78 -define webp:method=6 public/photos/<id>-1520.webp
+```
+
+Three things about this are load-bearing:
+
+- **`sizes` on the thumbnail decides which file downloads.** It is stated as px above 68rem,
+  where the band stops growing, because a generous `vw` guess makes every tile on a 2× screen
+  fetch the 1520 file — fourteen of those outweigh the rest of the site. `TILE_SIZES` in
+  `Gallery.jsx`.
+- **`.gallery img` needs `height: auto`.** The `width`/`height` attributes arrive as
+  presentational hints, so both dimensions count as specified and `aspect-ratio` is ignored — the
+  tiles rendered 1330px tall before that line existed.
+- **The paths go through `asset()`.** They are under `public/`, so they are runtime URLs; a bare
+  `/photos/…` works in dev and 404s on Pages. See the base-path rule.
+
+Two content cautions, both real:
+
+- **The stock-looking shots on the old site are deliberately not here** — rafting, mountain
+  biking, via ferrata, skiing, a charcuterie board. They look licensed and the licence is not
+  ours. Same rule as the flyer's photographs: confirm rights with Gabriele, and get originals.
+- **The old site is "Appartamenti Tiziana", plural.** These frames show two kitchens and four
+  bedrooms, so more than one unit is in the set, while Casa Tiziana is one apartment sleeping six.
+  Ask which are actually it and delete the rest from `photos.js` — a photograph of a room the
+  guest will not get is the same mistake as an amenity the flyer does not offer.
+
 ## Layout
 
 | Path | Role |
 |---|---|
 | `index.html` | Vite entry. Title, meta, Open Graph, geo tags and the JSON-LD block. |
-| `src/App.jsx` | `<Canvas>` setup (camera, dpr, shadows, exposure), the hero, and the prose page. |
-| `src/content.js` | Every string and hard fact. `content` = the flyer; `sections` = the prose page. |
+| `src/App.jsx` | `<Canvas>` setup (camera, dpr, shadows, exposure), the hero, the prose page, the language switcher. |
+| `src/Gallery.jsx` | The photo grid and its lightbox. |
+| `src/content/index.js` | `copyFor(lang)`, `LANGUAGES`, `DEFAULT_LANG`, the section-id table. |
+| `src/content/facts.js` | What does not translate: name, rate, phone, email, Maps pin, address. |
+| `src/content/en.js` | English copy. The reference shape the other two mirror. |
+| `src/content/it.js` | Italian copy. |
+| `src/content/de.js` | German copy. |
+| `src/content/photos.js` | Photo ids in gallery order, their intrinsic size, and provenance. |
 | `src/scene/Scene.jsx` | Composition only: fog, lights, controls, and the five scene modules. |
 | `src/scene/Chalet.jsx` | The building. Dimensions at the top drive the roof maths. |
 | `src/scene/HomeMountain.jsx` | The near mountain: rock, snow cap, piste, walking path. |
@@ -107,9 +183,11 @@ own copy of the URL and a printed QR cannot be redirected, so change it there to
 | `src/lib/asset.js` | Base-path-aware asset URLs. See above. |
 | `src/lib/useReducedMotion.js` | Reactive `prefers-reduced-motion` hook. |
 | `src/lib/useInView.js` | Viewport-intersection hook. Gates the render loop. |
+| `src/lib/useLanguage.js` | Resolves the reader's language, persists it, rewrites the head. |
 | `src/index.css` | Design tokens in `:root`, plus hero, canvas and prose-page layout. |
 | `scripts/make-social-card.mjs` | Draws `public/social-card.jpg`, the 1200×630 Open Graph image. |
 | `public/models/` | GLTF/GLB drop point. |
+| `public/photos/` | The photographs, `<id>-760.webp` and `<id>-1520.webp`. |
 | `public/favicon.svg` | Tab and search-result mark. |
 | `public/social-card.jpg` | Generated artifact — edit the script, not the file. |
 
@@ -176,9 +254,11 @@ Other non-obvious choices, all load-bearing:
   remote font URL and similar helpers pull from pmndrs' asset host at runtime. They add a
   third-party dependency to a site that is otherwise fully self-contained, and they fail closed.
   Use explicit lights, or download the asset into `public/` and reference it through `asset()`.
-- **Copy lives in `src/content.js`, never inline in a component.** Components destructure from it.
-  It has two exports: `content` is the flyer, transcribed — when the flyer changes, that changes
-  first. `sections` is the prose page, which the flyer has no equivalent of.
+- **Copy lives in `src/content/`, never inline in a component.** Components destructure what
+  `copyFor(lang)` returns: `content` is the flyer, transcribed — when the flyer changes, that
+  changes first — and `sections` is the prose page, which the flyer has no equivalent of. This
+  includes button labels and aria-labels: "Book on WhatsApp" in a component is a string that
+  cannot be translated. See [Three languages](#three-languages).
 - **The address is stated in two places and they must agree.** The JSON-LD in `index.html` and the
   colophon rendered from `content.place` describe the same property to the same crawler; a
   mismatch between the page and its structured data is the usual reason a local listing fails to
@@ -211,8 +291,9 @@ Other non-obvious choices, all load-bearing:
 - **The flyer's photographs have not been extracted or used.** The rafting, climbing and MTB shots
   look like licensed stock; the building shot may be the owner's own. Confirm rights with Gabriele
   before putting any of them on the site, and get originals rather than pulling 72dpi crops out of
-  the PDF.
-- **`src/content.js` contains the owner's personal phone number and email**, exactly as published
+  the PDF. The pictures the site *does* ship came from the owner's earlier page instead — see
+  [The photographs](#the-photographs), which carries the same warning about the stock ones.
+- **`src/content/facts.js` contains the owner's personal phone number and email**, exactly as published
   on the flyer. That is intended — it is the booking channel — but it means the repo and the built
   site carry personal contact details. Worth a moment's thought before making the repo public.
 

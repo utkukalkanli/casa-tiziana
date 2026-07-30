@@ -17,6 +17,11 @@ const siteUrl = (process.env.SITE_URL || 'https://utkukalkanli.github.io/casa-ti
   '/',
 )
 
+// URLs go into an XML document, where `&` is not a literal. The site's own address has
+// none today; a custom domain with a query string one day would.
+const escapeXml = (s) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
 /**
  * Substitutes %SITE_URL% into index.html and emits robots.txt and sitemap.xml from
  * the same value, so the site's own address is stated in exactly one place.
@@ -49,17 +54,38 @@ Sitemap: ${siteUrl}sitemap.xml
 `,
       })
 
+      // One page in three languages. Each language is listed with the full set of
+      // alternates including itself, which is what the protocol asks for — and the
+      // hreflang block in index.html says the same thing, from the other direction.
+      const languages = [
+        { code: 'en', url: siteUrl },
+        { code: 'it', url: `${siteUrl}?lang=it` },
+        { code: 'de', url: `${siteUrl}?lang=de` },
+      ]
+
+      const alternates = [...languages, { code: 'x-default', url: siteUrl }]
+        .map(
+          (l) =>
+            `    <xhtml:link rel="alternate" hreflang="${l.code}" href="${escapeXml(l.url)}"/>`,
+        )
+        .join('\n')
+
       this.emitFile({
         type: 'asset',
         fileName: 'sitemap.xml',
         source: `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${siteUrl}</loc>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${languages
+  .map(
+    (l) => `  <url>
+    <loc>${escapeXml(l.url)}</loc>
+${alternates}
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-  </url>
+  </url>`,
+  )
+  .join('\n')}
 </urlset>
 `,
       })

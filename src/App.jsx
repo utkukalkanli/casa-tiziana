@@ -1,17 +1,22 @@
 import { Suspense, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import Scene from './scene/Scene.jsx'
-import { content, sections } from './content.js'
+import Gallery from './Gallery.jsx'
+import { LANGUAGES } from './content/index.js'
 import { useInView } from './lib/useInView.js'
-
-const { headline, price, contact, cta, place } = content
-const { about, location, seasons, faq, closing } = sections
+import { useLanguage } from './lib/useLanguage.js'
 
 export default function App() {
   const heroRef = useRef(null)
   // The canvas is fixed behind the whole document; once the hero scrolls away there
   // is nothing to draw. See useInView.
   const heroInView = useInView(heroRef)
+
+  // Copy for the reader's language, and the setter behind the switcher. Everything
+  // below reads from these — nothing on the page is written in a component.
+  const { lang, content, sections, setLang } = useLanguage()
+  const { headline, price, contact, cta, place, ui } = content
+  const { about, gallery, location, seasons, faq, closing } = sections
 
   return (
     <>
@@ -35,31 +40,39 @@ export default function App() {
 
       <header className="hero" ref={heroRef}>
         <div className="hero-top">
-          <a className="eyebrow" href={contact.maps} target="_blank" rel="noreferrer">
-            <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
-              <path
-                fill="currentColor"
-                d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"
-              />
-            </svg>
-            {content.location}
-            <span className="eyebrow-cta">
-              <span>{content.locationCta}</span>
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 17 17 7M9 7h8v8" />
+          {/* Location on the left, languages on the right. One flex row rather than an
+              absolutely positioned switcher: on a narrow phone the location pill is
+              nearly as wide as the screen, and the two would overlap. */}
+          <div className="hero-head">
+            <a className="eyebrow" href={contact.maps} target="_blank" rel="noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
+                <path
+                  fill="currentColor"
+                  d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"
+                />
               </svg>
-            </span>
-          </a>
+              {content.location}
+              <span className="eyebrow-cta">
+                <span>{content.locationCta}</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  width="12"
+                  height="12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M7 17 17 7M9 7h8v8" />
+                </svg>
+              </span>
+            </a>
+
+            <LanguageSwitch current={lang.code} onChange={setLang} label={ui.languageLabel} />
+          </div>
+
           <h1 className="headline">
             <span className="thin">{headline.lead} </span>
             {headline.main}
@@ -70,8 +83,7 @@ export default function App() {
           </h1>
           <p className="intro">{content.intro}</p>
           <span className="pill">
-            Rents from {price.currency}
-            {price.from}/{price.unit}
+            {ui.rentsFrom} {price.rate}/{price.unit}
             <span className="note">{price.note}</span>
           </span>
 
@@ -94,7 +106,7 @@ export default function App() {
               {cta.label}
             </a>
             <a className="btn-whatsapp" href={contact.whatsappUrl} target="_blank" rel="noreferrer">
-              Book on WhatsApp
+              {ui.bookWhatsApp}
             </a>
             <a className="email" href={`mailto:${contact.email}`}>
               {contact.email}
@@ -123,6 +135,10 @@ export default function App() {
             <p key={p.slice(0, 24)}>{p}</p>
           ))}
         </section>
+
+        {/* Directly after the prose about the apartment, because that is the paragraph
+            that makes a reader want to see it. */}
+        <Gallery copy={gallery} />
 
         <section className="band" id={location.id}>
           <h2>{location.title}</h2>
@@ -166,7 +182,7 @@ export default function App() {
           <p className="lede">{closing.body}</p>
           <div className="closing-actions">
             <a className="btn-whatsapp" href={contact.whatsappUrl} target="_blank" rel="noreferrer">
-              Book on WhatsApp
+              {ui.bookWhatsApp}
             </a>
             <a className="email" href={`mailto:${contact.email}`}>
               {contact.email}
@@ -197,5 +213,33 @@ export default function App() {
         </footer>
       </main>
     </>
+  )
+}
+
+/**
+ * EN / IT / DE, top right of the hero.
+ *
+ * Buttons rather than links: the page does not reload, and a link whose href is the
+ * same document with a query string invites a middle-click that throws the reader's
+ * scroll position away. `aria-pressed` is what tells a screen reader which one is on —
+ * the teal fill only says it to people who can see it.
+ */
+function LanguageSwitch({ current, onChange, label }) {
+  return (
+    <div className="lang-switch" role="group" aria-label={label}>
+      {LANGUAGES.map((l) => (
+        <button
+          key={l.code}
+          type="button"
+          lang={l.code}
+          aria-pressed={l.code === current}
+          onClick={() => onChange(l.code)}
+        >
+          <span aria-hidden="true">{l.short}</span>
+          {/* The button shows two letters; a screen reader gets the language's name. */}
+          <span className="sr-only">{l.label}</span>
+        </button>
+      ))}
+    </div>
   )
 }

@@ -17,6 +17,18 @@
     />
     <link rel="canonical" href="%SITE_URL%" />
 
+    <!--
+      Three languages, one HTML file. The page is client-rendered — a crawler already
+      has to run the bundle to see any copy at all — so `useLanguage` swaps the title,
+      the description, the Open Graph pair and the canonical link above to match
+      whichever `?lang=` it was served, and these alternates tell it the other two
+      exist. English carries no parameter and is also x-default.
+    -->
+    <link rel="alternate" hreflang="en" href="%SITE_URL%" />
+    <link rel="alternate" hreflang="it" href="%SITE_URL%?lang=it" />
+    <link rel="alternate" hreflang="de" href="%SITE_URL%?lang=de" />
+    <link rel="alternate" hreflang="x-default" href="%SITE_URL%" />
+
     <!-- max-snippet/max-image-preview are opt-ins: without them Google may show a
          clipped snippet and a thumbnail too small to read. -->
     <meta
@@ -33,6 +45,8 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Casa Tiziana" />
     <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale:alternate" content="it_IT" />
+    <meta property="og:locale:alternate" content="de_DE" />
     <meta property="og:title" content="Casa Tiziana — Your Basecamp in the Dolomites" />
     <meta
       property="og:description"
@@ -159,7 +173,7 @@
             "@id": "%SITE_URL%#website",
             "url": "%SITE_URL%",
             "name": "Casa Tiziana",
-            "inLanguage": "en",
+            "inLanguage": ["en", "it", "de"],
             "about": { "@id": "%SITE_URL%#property" }
           }
         ]
